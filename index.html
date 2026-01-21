@@ -3,44 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kts Family (Final V22)</title>
+    <title>Kts Family (V23 X-Ray)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* CSS GIAO DIỆN */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #050b14; color: #ffffff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* Màn hình khóa */
         #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #020617; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .pin-dots { display: flex; gap: 10px; margin: 20px 0; }
         .dot { width: 15px; height: 15px; border-radius: 50%; background: #334155; transition: 0.2s; }
         .dot.filled { background: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
-        
         .num-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .num-btn { background: #1e293b; color: white; border: 1px solid #334155; padding: 15px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; width: 60px; height: 60px; margin: 5px; transition: 0.2s; user-select: none; }
         .num-btn:active { background: #3b82f6; transform: scale(0.9); }
-        .num-btn.active-key { background: #3b82f6; transform: scale(0.9); }
-        .num-btn.disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
         
-        /* Giao diện chính */
+        /* KHUNG DEBUG SOI LỖI */
+        #debugConsole {
+            margin-top: 20px;
+            background: #000;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            font-family: monospace;
+            padding: 10px;
+            width: 90%;
+            max-width: 400px;
+            font-size: 0.75rem;
+            word-break: break-all;
+            display: block; /* Luôn hiện để soi lỗi */
+        }
+
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background-color: #0a0e17; border-bottom: 1px solid #1f2937; height: 60px; }
         .logo { font-size: 1.3rem; font-weight: 800; color: #3b82f6; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
         .btn-tool { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
-        
         .main-wrapper { display: flex; flex: 1; overflow: hidden; }
         .sidebar { width: 250px; background-color: #0f1623; border-right: 1px solid #1f2937; padding: 20px; overflow-y: auto; }
         .folder-item { display: flex; justify-content: space-between; padding: 10px; color: #cbd5e1; cursor: pointer; border-radius: 6px; margin-bottom: 5px; }
         .folder-item.active { background-color: #1d4ed8; color: white; }
-        
         .content-area { flex: 1; padding: 20px; overflow-y: auto; background-color: #050b14; }
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-        
         .card { background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 15px; position: relative; display: flex; flex-direction: column; }
         .card-header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
         .card-icon { width: 40px; height: 40px; border-radius: 8px; background: white; object-fit: contain; padding: 2px; }
-        
-        /* Modal */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
         .modal-content { background: #1e293b; margin: 5% auto; padding: 25px; width: 500px; border-radius: 12px; border: 1px solid #3b82f6; max-height: 80vh; overflow-y: auto; }
         .cloud-status { font-size: 0.8rem; color: #10b981; margin-right: 15px; display: none; }
@@ -51,35 +54,41 @@
 <body>
 
     <div id="lockScreen">
-        <h2 style="color: #3b82f6; margin-bottom: 10px;"><i class="fas fa-lock"></i> Kts Security</h2>
-        <small id="statusText" style="color: #64748b; margin-bottom: 20px;">Nhập mã PIN để mở khóa</small>
-        
+        <h2 style="color: #3b82f6; margin-bottom: 10px;">DEBUG MODE (V23)</h2>
         <div class="pin-dots">
             <div class="dot" id="dot1"></div><div class="dot" id="dot2"></div><div class="dot" id="dot3"></div>
             <div class="dot" id="dot4"></div><div class="dot" id="dot5"></div><div class="dot" id="dot6"></div>
         </div>
-        
         <div class="num-pad">
-            <button class="num-btn" id="btn1" onclick="p(1)">1</button><button class="num-btn" id="btn2" onclick="p(2)">2</button><button class="num-btn" id="btn3" onclick="p(3)">3</button>
-            <button class="num-btn" id="btn4" onclick="p(4)">4</button><button class="num-btn" id="btn5" onclick="p(5)">5</button><button class="num-btn" id="btn6" onclick="p(6)">6</button>
-            <button class="num-btn" id="btn7" onclick="p(7)">7</button><button class="num-btn" id="btn8" onclick="p(8)">8</button><button class="num-btn" id="btn9" onclick="p(9)">9</button>
-            <div></div><button class="num-btn" id="btn0" onclick="p(0)">0</button><button class="num-btn" onclick="clr()" style="color:#ef4444"><i class="fas fa-times"></i></button>
+            <button class="num-btn" onclick="p(1)">1</button><button class="num-btn" onclick="p(2)">2</button><button class="num-btn" onclick="p(3)">3</button>
+            <button class="num-btn" onclick="p(4)">4</button><button class="num-btn" onclick="p(5)">5</button><button class="num-btn" onclick="p(6)">6</button>
+            <button class="num-btn" onclick="p(7)">7</button><button class="num-btn" onclick="p(8)">8</button><button class="num-btn" onclick="p(9)">9</button>
+            <div></div><button class="num-btn" onclick="p(0)">0</button><button class="num-btn" onclick="clr()" style="color:#ef4444">X</button>
         </div>
         
-        <p id="msg" style="color:#ef4444; min-height:20px; margin-top:10px; text-align:center; font-size: 0.9rem;"></p>
+        <div id="debugConsole">
+            <p>1. Status: Đang chờ nhập...</p>
+            <p>2. Hash Gốc (412759): <br><span style="color:white">d01f9c878931168571775796010534e7dd108139556fa39f37c37f009383842c</span></p>
+            <p>----------------</p>
+            <p id="logUser">3. Bạn nhập: ...</p>
+            <p>4. Mã Hash máy bạn tính ra:</p>
+            <p id="logHash" style="color:yellow; font-weight:bold;">...</p>
+            <p>----------------</p>
+            <p id="logResult">KẾT QUẢ: ...</p>
+        </div>
     </div>
 
     <div id="mainApp" style="display: none; height: 100%;">
         <nav class="navbar">
-            <div class="logo"><i class="fas fa-shield-alt"></i> Kts Family</div>
+            <div class="logo">Kts Family</div>
             <div style="display: flex; align-items: center;">
-                <span id="cloudMsg" class="cloud-status"><i class="fas fa-check-circle"></i> Online</span>
-                <button class="btn-tool" onclick="openSettingModal()" style="margin-right: 10px; border-color: #3b82f6; color: #3b82f6;"><i class="fas fa-sync"></i> Đồng Bộ</button>
-                <button onclick="openAddModal()" class="btn-tool" style="background:#2563eb; color:white; border:none; font-weight:bold;">+ Thêm</button>
+                <span id="cloudMsg" class="cloud-status">Online</span>
+                <button class="btn-tool" onclick="openSettingModal()">Đồng Bộ</button>
+                <button onclick="openAddModal()" class="btn-tool" style="background:#2563eb; color:white;">+ Thêm</button>
             </div>
         </nav>
         <div class="main-wrapper">
-            <div class="sidebar"><div class="folder-item active" onclick="selFold('all',this)"><span><i class="fas fa-th-large"></i> Tất cả</span></div><div id="folderList"></div><button onclick="addFold()" style="background:none; border:1px dashed #475569; color:#94a3b8; width:100%; padding:5px; margin-top:10px;">+ Folder</button></div>
+            <div class="sidebar"><div class="folder-item active" onclick="selFold('all',this)"><span>Tất cả</span></div><div id="folderList"></div><button onclick="addFold()" style="background:none; border:1px dashed #475569; color:#94a3b8; width:100%; padding:5px; margin-top:10px;">+ Folder</button></div>
             <div class="content-area"><h2 id="pageTitle" style="margin-bottom:20px;">Tất cả</h2><div id="grid" class="grid-container"></div></div>
         </div>
     </div>
@@ -89,29 +98,15 @@
     <div id="accModal" class="modal"><div class="modal-content"><span style="float:right; cursor:pointer;" onclick="closeM('accModal')">&times;</span><h2 id="accTitle">Tài khoản</h2><div style="margin-bottom:15px; background:#0f1623; padding:10px;"><input id="newU" placeholder="User"><input id="newP" placeholder="Pass"><input id="newN" placeholder="Ghi chú"><button onclick="addAcc()" style="width:100%; background:#059669; color:white; padding:8px; border:none;">+ Thêm</button></div><div id="accList"></div></div></div>
 
     <script>
-    
         const TARGET_HASH = "d01f9c878931168571775796010534e7dd108139556fa39f37c37f009383842c";
         
         let curPin = "";
-        let wrongCount = 0;
         let folders = JSON.parse(localStorage.getItem('f')) || [{id:'w',name:'Công việc'}];
         let tools = JSON.parse(localStorage.getItem('t')) || [];
         let curFilter='all', curToolIdx=-1;
         let binId = localStorage.getItem('binId') || "";
         let apiKey = localStorage.getItem('apiKey') || "";
 
-        // --- HỖ TRỢ BÀN PHÍM ---
-        document.addEventListener('keydown', function(event) {
-            if(document.querySelector('.num-btn.disabled')) return;
-            const key = event.key;
-            if (key >= '0' && key <= '9') {
-                const btn = document.getElementById('btn' + key);
-                if(btn) { btn.classList.add('active-key'); setTimeout(() => btn.classList.remove('active-key'), 100); }
-                p(parseInt(key));
-            } else if (key === 'Backspace' || key === 'Delete') { clr(); }
-        });
-
-        // --- HÀM MÃ HÓA SHA-256 ---
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -119,7 +114,6 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // --- XỬ LÝ NHẬP LIỆU ---
         function p(n){ 
             if(curPin.length < 6){ 
                 curPin += n; 
@@ -127,79 +121,45 @@
                 if(curPin.length == 6) checkPin(); 
             }
         }
-        function clr(){ curPin=""; dr(); document.getElementById('msg').innerText=""; }
+        function clr(){ curPin=""; dr(); document.getElementById('logUser').innerText="3. Bạn nhập: ..."; document.getElementById('logHash').innerText="..."; document.getElementById('logResult').innerText="KẾT QUẢ: ..."; }
         function dr(){ for(let i=1;i<=6;i++) { let d=document.getElementById('dot'+i); if(d) d.className=i<=curPin.length?"dot filled":"dot"; } }
         
         async function checkPin() {
-            document.getElementById('msg').innerText = "Đang kiểm tra...";
-            // Giả lập độ trễ an toàn
-            await new Promise(r => setTimeout(r, 200));
-
+            document.getElementById('logUser').innerText = "3. Bạn nhập: " + curPin;
+            
             try {
-                // Tính mã Hash của số bạn vừa nhập
                 const inputHash = await sha256(curPin);
+                document.getElementById('logHash').innerText = inputHash;
                 
-                // So sánh với mã Hash gốc (412759)
                 if(inputHash === TARGET_HASH){
-                    // ĐÚNG -> Mở khóa
-                    document.getElementById('lockScreen').style.display='none';
-                    document.getElementById('mainApp').style.display='flex';
-                    wrongCount = 0; 
-                    loadCfg(); render();
+                    document.getElementById('logResult').innerText = "KẾT QUẢ: ĐÚNG RỒI! ĐANG VÀO...";
+                    document.getElementById('logResult').style.color = "#00ff00";
+                    setTimeout(()=>{
+                        document.getElementById('lockScreen').style.display='none';
+                        document.getElementById('mainApp').style.display='flex';
+                        loadCfg(); render();
+                    }, 1000);
                 } else {
-                    // SAI -> Phạt
-                    wrongCount++;
-                    handleWrongPin();
+                    document.getElementById('logResult').innerText = "KẾT QUẢ: SAI (MÃ HASH KHÔNG KHỚP)";
+                    document.getElementById('logResult').style.color = "red";
+                    
+                    if(curPin === "412759") {
+                         alert("LỖI: Bạn nhập đúng 412759 nhưng mã Hash lại khác. Hãy copy mã Hash màu vàng và gửi cho tôi!");
+                    }
                 }
             } catch (e) {
-                // Nếu chạy trên máy tính (File local) sẽ bị lỗi này
-                alert("LỖI BẢO MẬT: Trình duyệt chặn tính năng mã hóa.\n\nVui lòng Upload lên GitHub Pages và chạy bằng link https://...");
-                clr();
+                document.getElementById('logResult').innerText = "LỖI: " + e.message;
             }
         }
 
-        // --- CƠ CHẾ CHỐNG HACK (TIME LOCK) ---
-        function handleWrongPin() {
-            let penaltyTime = 0;
-            if (wrongCount >= 5) {
-                penaltyTime = 300; 
-                document.getElementById('msg').innerText = "SAI QUÁ 5 LẦN! Khóa 5 phút.";
-            } else if (wrongCount >= 3) {
-                penaltyTime = 10;
-                document.getElementById('msg').innerText = "Sai 3 lần. Chờ 10s.";
-            } else {
-                document.getElementById('msg').innerText = "Sai mã PIN!";
-                setTimeout(clr, 800);
-                return;
-            }
-            if(penaltyTime > 0) lockUI(penaltyTime);
-        }
-
-        function lockUI(seconds) {
-            const btns = document.querySelectorAll('.num-btn');
-            btns.forEach(b => b.classList.add('disabled'));
-            let timeLeft = seconds;
-            const timer = setInterval(() => {
-                timeLeft--;
-                document.getElementById('statusText').innerText = `Tạm khóa: ${timeLeft}s`;
-                if(timeLeft <= 0) {
-                    clearInterval(timer);
-                    btns.forEach(b => b.classList.remove('disabled'));
-                    document.getElementById('statusText').innerText = "Mời thử lại";
-                    clr();
-                    if(wrongCount >= 5) wrongCount = 0; 
-                }
-            }, 1000);
-        }
-
-        // --- APP LOGIC (GIỮ NGUYÊN) ---
+        // LOGIC APP (RÚT GỌN ĐỂ CHẠY ĐƯỢC NGAY)
         function loadCfg(){ document.getElementById('cfgBinID').value=binId; document.getElementById('cfgApiKey').value=apiKey; if(binId&&apiKey) document.getElementById('cloudMsg').style.display='inline'; }
         function saveConfig(){ binId=document.getElementById('cfgBinID').value.trim(); apiKey=document.getElementById('cfgApiKey').value.trim(); localStorage.setItem('binId',binId); localStorage.setItem('apiKey',apiKey); alert("Đã lưu!"); loadCfg(); }
-        async function pushToCloud(){ if(!binId||!apiKey){alert("Thiếu cấu hình!");return;} document.getElementById('syncStatus').innerText="Đang gửi..."; try{ const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':apiKey},body:JSON.stringify({folders,tools,date:new Date().toLocaleString()})}); if(res.ok){document.getElementById('syncStatus').innerText="Xong!";alert("Đã gửi!");} }catch(e){alert(e.message);} }
-        async function pullFromCloud(){ if(!binId||!apiKey){alert("Thiếu cấu hình!");return;} document.getElementById('syncStatus').innerText="Đang tải..."; try{ const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`,{headers:{'X-Master-Key':apiKey}}); const json=await res.json(); if(json.record&&confirm(`Bản lưu ${json.record.date}. Cập nhật?`)){ tools=json.record.tools; folders=json.record.folders; saveLocal(); render(); document.getElementById('syncStatus').innerText="Xong!"; closeM('settingModal'); } }catch(e){alert(e.message);} }
+        async function pushToCloud(){ if(!binId||!apiKey){alert("Thiếu cấu hình!");return;} try{ const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':apiKey},body:JSON.stringify({folders,tools,date:new Date().toLocaleString()})}); if(res.ok){alert("Đã gửi!");} }catch(e){alert(e.message);} }
+        async function pullFromCloud(){ if(!binId||!apiKey){alert("Thiếu cấu hình!");return;} try{ const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`,{headers:{'X-Master-Key':apiKey}}); const json=await res.json(); if(json.record&&confirm(`Cập nhật?`)){ tools=json.record.tools; folders=json.record.folders; saveLocal(); render(); closeM('settingModal'); } }catch(e){alert(e.message);} }
         function saveLocal(){ localStorage.setItem('f',JSON.stringify(folders)); localStorage.setItem('t',JSON.stringify(tools)); }
         function render(){
-            const fl=document.getElementById('folderList'); fl.innerHTML=''; folders.forEach((f,i)=> fl.innerHTML+=`<div class="folder-item ${curFilter==f.id?'active':''}" onclick="selFold('${f.id}')"><span><i class="fas fa-folder"></i> ${f.name}</span><i class="fas fa-trash" onclick="delFold(${i},event)" style="color:#ef4444;font-size:0.8rem;"></i></div>`);
+            const fl=document.getElementById('folderList'); fl.innerHTML=''; folders.forEach((f,i)=> fl.innerHTML+=`<div class="folder-item ${curFilter==f.id?'active':''}" onclick="selFold('${f.id}')"><span> ${f.name}</span><i class="fas fa-trash" onclick="delFold(${i},event)" style="color:#ef4444;font-size:0.8rem;"></i></div>`);
             const gr=document.getElementById('grid'); gr.innerHTML=''; tools.filter(t=>curFilter=='all'||t.cat==curFilter).forEach(t=>{ const idx=tools.indexOf(t); gr.innerHTML+=`<div class="card"><i class="fas fa-times" onclick="delTool(${idx})" style="position:absolute;top:10px;right:10px;cursor:pointer;color:#64748b;"></i><div class="card-header"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111432.png" class="card-icon"><div><h3 style="color:white;font-size:1rem;">${t.name}</h3><span style="font-size:0.7rem;background:#1e3a8a;padding:2px 6px;border-radius:4px;">${t.acc?t.acc.length:0} Acc</span></div></div><div style="margin-top:auto;display:flex;gap:10px;"><button onclick="openAcc(${idx})" style="width:40px;background:#334155;border:none;border-radius:6px;color:#facc15;"><i class="fas fa-key"></i></button><a href="${t.link}" target="_blank" style="flex:1;text-align:center;background:#1f2937;color:white;text-decoration:none;padding:8px;border-radius:6px;border:1px solid #374151;font-size:0.9rem;">Truy cập</a></div></div>`; });
             const s=document.getElementById('inpCat'); s.innerHTML=''; folders.forEach(f=>s.innerHTML+=`<option value="${f.id}">${f.name}</option>`);
         }
