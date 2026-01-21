@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kts Family (V16 Final)</title>
+    <title>Kts Family (V18 Secure)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        /* CSS GIỮ NGUYÊN */
+        /* CSS CHUẨN */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #050b14; color: #ffffff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #020617; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
@@ -16,6 +17,10 @@
         .num-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .num-btn { background: #1e293b; color: white; border: 1px solid #334155; padding: 15px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; width: 60px; height: 60px; margin: 5px; transition: 0.2s;}
         .num-btn:active { background: #3b82f6; transform: scale(0.9); }
+        
+        /* Class để khóa nút khi nhập sai nhiều lần */
+        .num-btn.disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background-color: #0a0e17; border-bottom: 1px solid #1f2937; height: 60px; }
         .logo { font-size: 1.3rem; font-weight: 800; color: #3b82f6; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
         .btn-tool { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
@@ -38,7 +43,8 @@
 <body>
 
     <div id="lockScreen">
-        <h2 style="color: #3b82f6; margin-bottom: 20px;"><i class="fas fa-lock"></i> Kts Family (V16)</h2>
+        <h2 style="color: #3b82f6; margin-bottom: 10px;"><i class="fas fa-lock"></i> Kts Security</h2>
+        <small id="statusText" style="color: #64748b; margin-bottom: 20px;">Nhập mã PIN để mở khóa</small>
         
         <div class="pin-dots">
             <div class="dot" id="dot1"></div><div class="dot" id="dot2"></div><div class="dot" id="dot3"></div>
@@ -50,7 +56,7 @@
             <button class="num-btn" onclick="p(7)">7</button><button class="num-btn" onclick="p(8)">8</button><button class="num-btn" onclick="p(9)">9</button>
             <div></div><button class="num-btn" onclick="p(0)">0</button><button class="num-btn" onclick="clr()" style="color:#ef4444"><i class="fas fa-times"></i></button>
         </div>
-        <p id="msg" style="color:#ef4444; margin-top:10px; text-align:center; font-size: 0.8rem;"></p>
+        <p id="msg" style="color:#ef4444; min-height:20px; margin-top:10px; text-align:center; font-size: 0.9rem;"></p>
     </div>
 
     <div id="mainApp" style="display: none; height: 100%;">
@@ -73,17 +79,17 @@
     <div id="accModal" class="modal"><div class="modal-content"><span style="float:right; cursor:pointer;" onclick="closeM('accModal')">&times;</span><h2 id="accTitle">Tài khoản</h2><div style="margin-bottom:15px; background:#0f1623; padding:10px;"><input id="newU" placeholder="User"><input id="newP" placeholder="Pass"><input id="newN" placeholder="Ghi chú"><button onclick="addAcc()" style="width:100%; background:#059669; color:white; padding:8px; border:none;">+ Thêm</button></div><div id="accList"></div></div></div>
 
     <script>
-     
+        // --- CẤU HÌNH BẢO MẬT ---
         const HASHED_PIN = "d01f9c878931168571775796010534e7dd108139556fa39f37c37f009383842c";
         
         let curPin = "";
+        let wrongCount = 0; // Đếm số lần sai
         let folders = JSON.parse(localStorage.getItem('f')) || [{id:'w',name:'Công việc'}];
         let tools = JSON.parse(localStorage.getItem('t')) || [];
         let curFilter='all', curToolIdx=-1;
         let binId = localStorage.getItem('binId') || "";
         let apiKey = localStorage.getItem('apiKey') || "";
 
-        // --- HÀM BĂM SHA-256 ---
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -91,7 +97,6 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // --- KIỂM TRA PIN ---
         function p(n){ 
             if(curPin.length < 6){ 
                 curPin += n; 
@@ -103,26 +108,69 @@
         function dr(){ for(let i=1;i<=6;i++) { let d=document.getElementById('dot'+i); if(d) d.className=i<=curPin.length?"dot filled":"dot"; } }
         
         async function checkPin() {
+            document.getElementById('msg').innerText = "Checking...";
+            
+            // Giả lập độ trễ 0.3s để làm chậm hacker
+            await new Promise(r => setTimeout(r, 300));
+
             try {
-                if (!window.crypto || !window.crypto.subtle) throw new Error("HTTPS Required");
-                
                 const inputHash = await sha256(curPin);
                 
                 if(inputHash === HASHED_PIN){
-                    // ĐÚNG MÃ -> MỞ KHÓA
+                    // ĐÚNG -> Mở khóa và Reset bộ đếm phạt
                     document.getElementById('lockScreen').style.display='none';
                     document.getElementById('mainApp').style.display='flex';
+                    wrongCount = 0; 
                     loadCfg(); render();
                 } else {
-                    // SAI MÃ -> BÁO LỖI & HIỆN MÃ HASH ĐỂ SỬA
-                    document.getElementById('msg').innerHTML = 
-                        `Sai mã PIN! <br> Code máy bạn tính ra là: <br> <b style="color:yellow; font-family:monospace; font-size:0.7rem;">${inputHash}</b> <br> Hãy copy dòng vàng ở trên thay vào HASHED_PIN trong code nếu bạn chắc chắn nhập đúng số.`;
-                    setTimeout(clr, 10000); // Hiện lỗi lâu hơn để kịp đọc
+                    // SAI -> Tăng bộ đếm phạt
+                    wrongCount++;
+                    handleWrongPin();
                 }
             } catch (e) {
-                alert("Lỗi: Bạn phải upload lên GitHub (HTTPS) mới dùng được tính năng bảo mật này.");
+                alert("Lỗi trình duyệt: Hãy dùng GitHub Pages (HTTPS).");
                 clr();
             }
+        }
+
+        // --- CƠ CHẾ PHẠT TIME LOCK (Của V17) ---
+        function handleWrongPin() {
+            let penaltyTime = 0;
+
+            if (wrongCount >= 5) {
+                penaltyTime = 300; // Sai 5 lần -> Khóa 5 phút
+                document.getElementById('msg').innerText = "SAI QUÁ 5 LẦN! Khóa 5 phút.";
+            } else if (wrongCount >= 3) {
+                penaltyTime = 10; // Sai 3 lần -> Khóa 10s
+                document.getElementById('msg').innerText = "Sai liên tiếp 3 lần. Chờ 10s.";
+            } else {
+                document.getElementById('msg').innerText = "Sai mã PIN!";
+                setTimeout(clr, 800);
+                return;
+            }
+
+            if(penaltyTime > 0) lockUI(penaltyTime);
+        }
+
+        function lockUI(seconds) {
+            // Khóa bàn phím
+            const btns = document.querySelectorAll('.num-btn');
+            btns.forEach(b => b.classList.add('disabled'));
+            
+            let timeLeft = seconds;
+            const timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('statusText').innerText = `Hệ thống tạm khóa: ${timeLeft}s`;
+                if(timeLeft <= 0) {
+                    clearInterval(timer);
+                    // Mở khóa bàn phím
+                    btns.forEach(b => b.classList.remove('disabled'));
+                    document.getElementById('statusText').innerText = "Mời thử lại";
+                    clr();
+                    // Nếu đã bị phạt 5 phút xong thì reset về 0 để cho cơ hội làm lại
+                    if(wrongCount >= 5) wrongCount = 0; 
+                }
+            }, 1000);
         }
 
         // --- LOGIC APP (GIỮ NGUYÊN) ---
