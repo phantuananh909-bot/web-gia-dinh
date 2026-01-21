@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kts Family (V20 Keyboard)</title>
+    <title>Kts Family (Secure Login)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -17,7 +17,7 @@
         .num-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .num-btn { background: #1e293b; color: white; border: 1px solid #334155; padding: 15px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; width: 60px; height: 60px; margin: 5px; transition: 0.2s; user-select: none; }
         .num-btn:active { background: #3b82f6; transform: scale(0.9); }
-        .num-btn.active-key { background: #3b82f6; transform: scale(0.9); } /* Hiệu ứng khi ấn phím */
+        .num-btn.active-key { background: #3b82f6; transform: scale(0.9); }
         .num-btn.disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
         
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background-color: #0a0e17; border-bottom: 1px solid #1f2937; height: 60px; }
@@ -43,7 +43,7 @@
 
     <div id="lockScreen">
         <h2 style="color: #3b82f6; margin-bottom: 10px;"><i class="fas fa-lock"></i> Kts Security</h2>
-        <small id="statusText" style="color: #64748b; margin-bottom: 20px;">Nhập mã PIN (Hỗ trợ bàn phím)</small>
+        <small id="statusText" style="color: #64748b; margin-bottom: 20px;">Nhập mã PIN để mở khóa</small>
         
         <div class="pin-dots">
             <div class="dot" id="dot1"></div><div class="dot" id="dot2"></div><div class="dot" id="dot3"></div>
@@ -56,12 +56,6 @@
             <div></div><button class="num-btn" id="btn0" onclick="p(0)">0</button><button class="num-btn" onclick="clr()" style="color:#ef4444"><i class="fas fa-times"></i></button>
         </div>
         
-        <div id="debugBox" style="margin-top:20px; padding:15px; background:#1e293b; border:1px dashed #facc15; border-radius:8px; max-width:90%; word-break:break-all; display:none;">
-            <p style="color:#facc15; font-size:0.8rem;">⚠️ HASH CỦA SỐ BẠN VỪA NHẬP:</p>
-            <code id="hashResult" style="color:white; font-family:monospace; font-weight:bold; font-size:0.9rem;"></code>
-            <p style="color:#94a3b8; font-size:0.7rem; margin-top:5px;">Copy mã trên thay vào TARGET_HASH trong code.</p>
-        </div>
-
         <p id="msg" style="color:#ef4444; min-height:20px; margin-top:10px; text-align:center; font-size: 0.9rem;"></p>
     </div>
 
@@ -85,10 +79,9 @@
     <div id="accModal" class="modal"><div class="modal-content"><span style="float:right; cursor:pointer;" onclick="closeM('accModal')">&times;</span><h2 id="accTitle">Tài khoản</h2><div style="margin-bottom:15px; background:#0f1623; padding:10px;"><input id="newU" placeholder="User"><input id="newP" placeholder="Pass"><input id="newN" placeholder="Ghi chú"><button onclick="addAcc()" style="width:100%; background:#059669; color:white; padding:8px; border:none;">+ Thêm</button></div><div id="accList"></div></div></div>
 
     <script>
-        // --- CẤU HÌNH ---
-        // Hiện tại tôi để mã sai để kích hoạt chế độ hiện Hash cho bạn copy.
-        // Sau khi copy xong, dán đè vào đây.
-        const TARGET_HASH = "d01f9c878931168571775796010534e7dd108139556fa39f37c37f009383842c"; 
+        // --- 1. DÁN MÃ HASH CHUẨN MÀ BẠN COPY ĐƯỢC VÀO ĐÂY ---
+        // (Ví dụ: "d01f9c...")
+        const TARGET_HASH = "HÃY_DÁN_MÃ_HASH_VÀO_ĐÂY"; 
         
         let curPin = "";
         let wrongCount = 0;
@@ -98,23 +91,15 @@
         let binId = localStorage.getItem('binId') || "";
         let apiKey = localStorage.getItem('apiKey') || "";
 
-        // --- LẮNG NGHE BÀN PHÍM (TÍNH NĂNG MỚI) ---
+        // --- HỖ TRỢ BÀN PHÍM ---
         document.addEventListener('keydown', function(event) {
-            // Nếu đang bị khóa (Time Lock) thì không nhận phím
             if(document.querySelector('.num-btn.disabled')) return;
-
             const key = event.key;
             if (key >= '0' && key <= '9') {
-                // Hiệu ứng bấm nút
                 const btn = document.getElementById('btn' + key);
-                if(btn) {
-                    btn.classList.add('active-key');
-                    setTimeout(() => btn.classList.remove('active-key'), 100);
-                }
+                if(btn) { btn.classList.add('active-key'); setTimeout(() => btn.classList.remove('active-key'), 100); }
                 p(parseInt(key));
-            } else if (key === 'Backspace' || key === 'Delete') {
-                clr();
-            }
+            } else if (key === 'Backspace' || key === 'Delete') { clr(); }
         });
 
         async function sha256(message) {
@@ -125,13 +110,9 @@
         }
 
         function p(n){ 
-            if(curPin.length < 6){ 
-                curPin += n; 
-                dr(); 
-                if(curPin.length == 6) checkPin(); 
-            }
+            if(curPin.length < 6){ curPin += n; dr(); if(curPin.length == 6) checkPin(); }
         }
-        function clr(){ curPin=""; dr(); document.getElementById('msg').innerText=""; document.getElementById('debugBox').style.display='none'; }
+        function clr(){ curPin=""; dr(); document.getElementById('msg').innerText=""; }
         function dr(){ for(let i=1;i<=6;i++) { let d=document.getElementById('dot'+i); if(d) d.className=i<=curPin.length?"dot filled":"dot"; } }
         
         async function checkPin() {
@@ -148,13 +129,10 @@
                     loadCfg(); render();
                 } else {
                     wrongCount++;
-                    // --- HIỆN HASH CHO BẠN COPY ---
-                    document.getElementById('debugBox').style.display = 'block';
-                    document.getElementById('hashResult').innerText = inputHash;
                     handleWrongPin();
                 }
             } catch (e) {
-                alert("Lỗi: Vui lòng chạy trên GitHub Pages (HTTPS).");
+                alert("Lỗi: Hãy chạy trên GitHub Pages (HTTPS).");
                 clr();
             }
         }
@@ -169,9 +147,9 @@
                 document.getElementById('msg').innerText = "Sai 3 lần. Chờ 10s.";
             } else {
                 document.getElementById('msg').innerText = "Sai mã PIN!";
-                // Không xóa ngay để bạn kịp copy hash
+                setTimeout(clr, 800);
+                return;
             }
-
             if(penaltyTime > 0) lockUI(penaltyTime);
         }
 
