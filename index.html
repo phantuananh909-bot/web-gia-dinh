@@ -7,31 +7,40 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* CSS CHUẨN */
+        /* CSS GIAO DIỆN */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #050b14; color: #ffffff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Màn hình khóa */
         #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #020617; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .pin-dots { display: flex; gap: 10px; margin: 20px 0; }
         .dot { width: 15px; height: 15px; border-radius: 50%; background: #334155; transition: 0.2s; }
         .dot.filled { background: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
+        
         .num-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .num-btn { background: #1e293b; color: white; border: 1px solid #334155; padding: 15px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; width: 60px; height: 60px; margin: 5px; transition: 0.2s; user-select: none; }
         .num-btn:active { background: #3b82f6; transform: scale(0.9); }
         .num-btn.active-key { background: #3b82f6; transform: scale(0.9); }
         .num-btn.disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
         
+        /* Giao diện chính */
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background-color: #0a0e17; border-bottom: 1px solid #1f2937; height: 60px; }
         .logo { font-size: 1.3rem; font-weight: 800; color: #3b82f6; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
         .btn-tool { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+        
         .main-wrapper { display: flex; flex: 1; overflow: hidden; }
         .sidebar { width: 250px; background-color: #0f1623; border-right: 1px solid #1f2937; padding: 20px; overflow-y: auto; }
         .folder-item { display: flex; justify-content: space-between; padding: 10px; color: #cbd5e1; cursor: pointer; border-radius: 6px; margin-bottom: 5px; }
         .folder-item.active { background-color: #1d4ed8; color: white; }
+        
         .content-area { flex: 1; padding: 20px; overflow-y: auto; background-color: #050b14; }
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+        
         .card { background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 15px; position: relative; display: flex; flex-direction: column; }
         .card-header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
         .card-icon { width: 40px; height: 40px; border-radius: 8px; background: white; object-fit: contain; padding: 2px; }
+        
+        /* Modal */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
         .modal-content { background: #1e293b; margin: 5% auto; padding: 25px; width: 500px; border-radius: 12px; border: 1px solid #3b82f6; max-height: 80vh; overflow-y: auto; }
         .cloud-status { font-size: 0.8rem; color: #10b981; margin-right: 15px; display: none; }
@@ -49,12 +58,14 @@
             <div class="dot" id="dot1"></div><div class="dot" id="dot2"></div><div class="dot" id="dot3"></div>
             <div class="dot" id="dot4"></div><div class="dot" id="dot5"></div><div class="dot" id="dot6"></div>
         </div>
+        
         <div class="num-pad">
             <button class="num-btn" id="btn1" onclick="p(1)">1</button><button class="num-btn" id="btn2" onclick="p(2)">2</button><button class="num-btn" id="btn3" onclick="p(3)">3</button>
             <button class="num-btn" id="btn4" onclick="p(4)">4</button><button class="num-btn" id="btn5" onclick="p(5)">5</button><button class="num-btn" id="btn6" onclick="p(6)">6</button>
             <button class="num-btn" id="btn7" onclick="p(7)">7</button><button class="num-btn" id="btn8" onclick="p(8)">8</button><button class="num-btn" id="btn9" onclick="p(9)">9</button>
             <div></div><button class="num-btn" id="btn0" onclick="p(0)">0</button><button class="num-btn" onclick="clr()" style="color:#ef4444"><i class="fas fa-times"></i></button>
         </div>
+        
         <p id="msg" style="color:#ef4444; min-height:20px; margin-top:10px; text-align:center; font-size: 0.9rem;"></p>
     </div>
 
@@ -78,9 +89,8 @@
     <div id="accModal" class="modal"><div class="modal-content"><span style="float:right; cursor:pointer;" onclick="closeM('accModal')">&times;</span><h2 id="accTitle">Tài khoản</h2><div style="margin-bottom:15px; background:#0f1623; padding:10px;"><input id="newU" placeholder="User"><input id="newP" placeholder="Pass"><input id="newN" placeholder="Ghi chú"><button onclick="addAcc()" style="width:100%; background:#059669; color:white; padding:8px; border:none;">+ Thêm</button></div><div id="accList"></div></div></div>
 
     <script>
-        // --- CẤU HÌNH ---
-        // Lấy chính xác mã hash từ bản V16 (đã test thành công)
-        const HASHED_PIN = "d01f9c878931168571775796010534e7dd108139556fa39f37c37f009383842c";
+    
+        const TARGET_HASH = "d01f9c878931168571775796010534e7dd108139556fa39f37c37f009383842c";
         
         let curPin = "";
         let wrongCount = 0;
@@ -101,7 +111,7 @@
             } else if (key === 'Backspace' || key === 'Delete') { clr(); }
         });
 
-        // --- HÀM BĂM SHA-256 (Giữ nguyên từ V16) ---
+        // --- HÀM MÃ HÓA SHA-256 ---
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -109,6 +119,7 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
+        // --- XỬ LÝ NHẬP LIỆU ---
         function p(n){ 
             if(curPin.length < 6){ 
                 curPin += n; 
@@ -120,32 +131,34 @@
         function dr(){ for(let i=1;i<=6;i++) { let d=document.getElementById('dot'+i); if(d) d.className=i<=curPin.length?"dot filled":"dot"; } }
         
         async function checkPin() {
-            document.getElementById('msg').innerText = "Verifying...";
-            
-            // Giả lập trễ nhẹ để chống spam
+            document.getElementById('msg').innerText = "Đang kiểm tra...";
+            // Giả lập độ trễ an toàn
             await new Promise(r => setTimeout(r, 200));
 
             try {
+                // Tính mã Hash của số bạn vừa nhập
                 const inputHash = await sha256(curPin);
                 
-                if(inputHash === HASHED_PIN){
+                // So sánh với mã Hash gốc (412759)
+                if(inputHash === TARGET_HASH){
                     // ĐÚNG -> Mở khóa
                     document.getElementById('lockScreen').style.display='none';
                     document.getElementById('mainApp').style.display='flex';
                     wrongCount = 0; 
                     loadCfg(); render();
                 } else {
-                    // SAI -> Phạt thời gian
+                    // SAI -> Phạt
                     wrongCount++;
                     handleWrongPin();
                 }
             } catch (e) {
-                alert("Lỗi: Hãy chạy trên GitHub Pages (HTTPS).");
+                // Nếu chạy trên máy tính (File local) sẽ bị lỗi này
+                alert("LỖI BẢO MẬT: Trình duyệt chặn tính năng mã hóa.\n\nVui lòng Upload lên GitHub Pages và chạy bằng link https://...");
                 clr();
             }
         }
 
-        // --- CƠ CHẾ PHẠT TIME LOCK ---
+        // --- CƠ CHẾ CHỐNG HACK (TIME LOCK) ---
         function handleWrongPin() {
             let penaltyTime = 0;
             if (wrongCount >= 5) {
@@ -179,7 +192,7 @@
             }, 1000);
         }
 
-        // LOGIC APP
+        // --- APP LOGIC (GIỮ NGUYÊN) ---
         function loadCfg(){ document.getElementById('cfgBinID').value=binId; document.getElementById('cfgApiKey').value=apiKey; if(binId&&apiKey) document.getElementById('cloudMsg').style.display='inline'; }
         function saveConfig(){ binId=document.getElementById('cfgBinID').value.trim(); apiKey=document.getElementById('cfgApiKey').value.trim(); localStorage.setItem('binId',binId); localStorage.setItem('apiKey',apiKey); alert("Đã lưu!"); loadCfg(); }
         async function pushToCloud(){ if(!binId||!apiKey){alert("Thiếu cấu hình!");return;} document.getElementById('syncStatus').innerText="Đang gửi..."; try{ const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':apiKey},body:JSON.stringify({folders,tools,date:new Date().toLocaleString()})}); if(res.ok){document.getElementById('syncStatus').innerText="Xong!";alert("Đã gửi!");} }catch(e){alert(e.message);} }
