@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kts Family Secure</title>
+    <title>Kts Family (Secure Debug)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* GIỮ NGUYÊN CSS NHƯ CŨ */
+        /* CSS GIỮ NGUYÊN */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #050b14; color: #ffffff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
         #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #020617; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .pin-dots { display: flex; gap: 10px; margin: 20px 0; }
         .dot { width: 15px; height: 15px; border-radius: 50%; background: #334155; transition: 0.2s; }
@@ -18,7 +17,6 @@
         .num-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .num-btn { background: #1e293b; color: white; border: 1px solid #334155; padding: 15px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; width: 60px; height: 60px; margin: 5px; transition: 0.2s;}
         .num-btn:active { background: #3b82f6; transform: scale(0.9); }
-
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background-color: #0a0e17; border-bottom: 1px solid #1f2937; height: 60px; }
         .logo { font-size: 1.3rem; font-weight: 800; color: #3b82f6; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
         .btn-tool { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
@@ -41,7 +39,9 @@
 <body>
 
     <div id="lockScreen">
-        <h2 style="color: #3b82f6; margin-bottom: 20px;"><i class="fas fa-lock"></i> Kts Family (Secure)</h2>
+        <h2 style="color: #3b82f6; margin-bottom: 10px;"><i class="fas fa-lock"></i> Kts Family</h2>
+        <small style="color: #64748b; margin-bottom: 20px;">Chế độ bảo mật: SHA-256</small>
+        
         <div class="pin-dots">
             <div class="dot" id="dot1"></div><div class="dot" id="dot2"></div><div class="dot" id="dot3"></div>
             <div class="dot" id="dot4"></div><div class="dot" id="dot5"></div><div class="dot" id="dot6"></div>
@@ -52,7 +52,7 @@
             <button class="num-btn" onclick="p(7)">7</button><button class="num-btn" onclick="p(8)">8</button><button class="num-btn" onclick="p(9)">9</button>
             <div></div><button class="num-btn" onclick="p(0)">0</button><button class="num-btn" onclick="clr()" style="color:#ef4444"><i class="fas fa-times"></i></button>
         </div>
-        <p id="msg" style="color:#ef4444; height:20px; margin-top:10px; text-align:center;"></p>
+        <p id="msg" style="color:#ef4444; min-height:20px; margin-top:10px; text-align:center; font-size: 0.9rem; max-width: 300px;"></p>
     </div>
 
     <div id="mainApp" style="display: none; height: 100%;">
@@ -60,23 +60,13 @@
             <div class="logo"><i class="fas fa-shield-alt"></i> Kts Family</div>
             <div style="display: flex; align-items: center;">
                 <span id="cloudMsg" class="cloud-status"><i class="fas fa-check-circle"></i> Online</span>
-                <button class="btn-tool" onclick="openSettingModal()" style="margin-right: 10px; border-color: #3b82f6; color: #3b82f6;">
-                    <i class="fas fa-sync"></i> Đồng Bộ
-                </button>
+                <button class="btn-tool" onclick="openSettingModal()" style="margin-right: 10px; border-color: #3b82f6; color: #3b82f6;"><i class="fas fa-sync"></i> Đồng Bộ</button>
                 <button onclick="openAddModal()" class="btn-tool" style="background:#2563eb; color:white; border:none; font-weight:bold;">+ Thêm</button>
             </div>
         </nav>
-
         <div class="main-wrapper">
-            <div class="sidebar">
-                <div class="folder-item active" onclick="selFold('all',this)"><span><i class="fas fa-th-large"></i> Tất cả</span></div>
-                <div id="folderList"></div>
-                <button onclick="addFold()" style="background:none; border:1px dashed #475569; color:#94a3b8; width:100%; padding:5px; margin-top:10px;">+ Folder</button>
-            </div>
-            <div class="content-area">
-                <h2 id="pageTitle" style="margin-bottom:20px;">Tất cả</h2>
-                <div id="grid" class="grid-container"></div>
-            </div>
+            <div class="sidebar"><div class="folder-item active" onclick="selFold('all',this)"><span><i class="fas fa-th-large"></i> Tất cả</span></div><div id="folderList"></div><button onclick="addFold()" style="background:none; border:1px dashed #475569; color:#94a3b8; width:100%; padding:5px; margin-top:10px;">+ Folder</button></div>
+            <div class="content-area"><h2 id="pageTitle" style="margin-bottom:20px;">Tất cả</h2><div id="grid" class="grid-container"></div></div>
         </div>
     </div>
 
@@ -85,6 +75,7 @@
     <div id="accModal" class="modal"><div class="modal-content"><span style="float:right; cursor:pointer;" onclick="closeM('accModal')">&times;</span><h2 id="accTitle">Tài khoản</h2><div style="margin-bottom:15px; background:#0f1623; padding:10px;"><input id="newU" placeholder="User"><input id="newP" placeholder="Pass"><input id="newN" placeholder="Ghi chú"><button onclick="addAcc()" style="width:100%; background:#059669; color:white; padding:8px; border:none;">+ Thêm</button></div><div id="accList"></div></div></div>
 
     <script>
+        // --- CẤU HÌNH MÃ HÓA ---
         const HASHED_PIN = "d01f9c878931168571775796010534e7dd108139556fa39f37c37f009383842c";
         
         let curPin = "";
@@ -94,7 +85,7 @@
         let binId = localStorage.getItem('binId') || "";
         let apiKey = localStorage.getItem('apiKey') || "";
 
-
+        // --- HÀM BĂM SHA-256 ---
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -102,7 +93,7 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // --- 3. KIỂM TRA MÃ PIN ---
+        // --- KIỂM TRA PIN (CÓ BẮT LỖI) ---
         function p(n){ 
             if(curPin.length < 6){ 
                 curPin += n; 
@@ -114,23 +105,39 @@
         function dr(){ for(let i=1;i<=6;i++) { let d=document.getElementById('dot'+i); if(d) d.className=i<=curPin.length?"dot filled":"dot"; } }
         
         async function checkPin() {
-        
-            const inputHash = await sha256(curPin);
-            if(inputHash === HASHED_PIN){
-                document.getElementById('lockScreen').style.display='none';
-                document.getElementById('mainApp').style.display='flex';
-                loadCfg(); render();
-            } else {
-                document.getElementById('msg').innerText="Sai mã PIN!"; setTimeout(clr,500);
+            document.getElementById('msg').innerText = "Đang kiểm tra...";
+            try {
+                // Kiểm tra xem trình duyệt có hỗ trợ không
+                if (!window.crypto || !window.crypto.subtle) {
+                    throw new Error("Trình duyệt chặn tính năng Bảo mật. Hãy dùng HTTPS hoặc Localhost.");
+                }
+
+                const inputHash = await sha256(curPin);
+                
+                if(inputHash === HASHED_PIN){
+                    document.getElementById('lockScreen').style.display='none';
+                    document.getElementById('mainApp').style.display='flex';
+                    loadCfg(); render();
+                } else {
+                    // HIỆN LỖI CHI TIẾT NẾU SAI
+                    console.log("Bạn nhập: " + curPin);
+                    console.log("Mã hóa ra: " + inputHash);
+                    console.log("Mã gốc là: " + HASHED_PIN);
+                    document.getElementById('msg').innerText = "Sai mã PIN! (Hãy nhấn F12 để xem chi tiết)";
+                    setTimeout(clr, 1500);
+                }
+            } catch (e) {
+                // HIỆN LỖI KỸ THUẬT RA MÀN HÌNH
+                alert("LỖI: " + e.message);
+                document.getElementById('msg').innerText = "Lỗi hệ thống (Xem thông báo)";
             }
         }
 
-        // --- 4. LOGIC KHÁC ---
+        // --- LOGIC APP ---
         function loadCfg(){ document.getElementById('cfgBinID').value=binId; document.getElementById('cfgApiKey').value=apiKey; if(binId&&apiKey) document.getElementById('cloudMsg').style.display='inline'; }
         function saveConfig(){ binId=document.getElementById('cfgBinID').value.trim(); apiKey=document.getElementById('cfgApiKey').value.trim(); localStorage.setItem('binId',binId); localStorage.setItem('apiKey',apiKey); alert("Đã lưu!"); loadCfg(); }
         async function pushToCloud(){ if(!binId||!apiKey){alert("Thiếu cấu hình!");return;} document.getElementById('syncStatus').innerText="Đang gửi..."; try{ const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':apiKey},body:JSON.stringify({folders,tools,date:new Date().toLocaleString()})}); if(res.ok){document.getElementById('syncStatus').innerText="Xong!";alert("Đã gửi!");} }catch(e){alert(e.message);} }
         async function pullFromCloud(){ if(!binId||!apiKey){alert("Thiếu cấu hình!");return;} document.getElementById('syncStatus').innerText="Đang tải..."; try{ const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`,{headers:{'X-Master-Key':apiKey}}); const json=await res.json(); if(json.record&&confirm(`Bản lưu ${json.record.date}. Cập nhật?`)){ tools=json.record.tools; folders=json.record.folders; saveLocal(); render(); document.getElementById('syncStatus').innerText="Xong!"; closeM('settingModal'); } }catch(e){alert(e.message);} }
-        
         function saveLocal(){ localStorage.setItem('f',JSON.stringify(folders)); localStorage.setItem('t',JSON.stringify(tools)); }
         function render(){
             const fl=document.getElementById('folderList'); fl.innerHTML=''; folders.forEach((f,i)=> fl.innerHTML+=`<div class="folder-item ${curFilter==f.id?'active':''}" onclick="selFold('${f.id}')"><span><i class="fas fa-folder"></i> ${f.name}</span><i class="fas fa-trash" onclick="delFold(${i},event)" style="color:#ef4444;font-size:0.8rem;"></i></div>`);
