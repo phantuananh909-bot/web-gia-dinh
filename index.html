@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kts Family (V15 Auto-Setup)</title>
+    <title>Kts Family (V16 Final)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
         /* CSS GIỮ NGUYÊN */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -39,8 +38,7 @@
 <body>
 
     <div id="lockScreen">
-        <h2 id="lockTitle" style="color: #3b82f6; margin-bottom: 10px; text-align: center;"><i class="fas fa-lock"></i> Kts Security</h2>
-        <p id="lockSub" style="color:#94a3b8; font-size:0.9rem; margin-bottom:20px; text-align: center;">Đang tải...</p>
+        <h2 style="color: #3b82f6; margin-bottom: 20px;"><i class="fas fa-lock"></i> Kts Family (V16)</h2>
         
         <div class="pin-dots">
             <div class="dot" id="dot1"></div><div class="dot" id="dot2"></div><div class="dot" id="dot3"></div>
@@ -52,11 +50,7 @@
             <button class="num-btn" onclick="p(7)">7</button><button class="num-btn" onclick="p(8)">8</button><button class="num-btn" onclick="p(9)">9</button>
             <div></div><button class="num-btn" onclick="p(0)">0</button><button class="num-btn" onclick="clr()" style="color:#ef4444"><i class="fas fa-times"></i></button>
         </div>
-        <p id="msg" style="color:#ef4444; min-height:20px; margin-top:10px; text-align:center; font-size: 0.9rem;"></p>
-        
-        <div style="text-align:center; margin-top:20px;">
-            <button onclick="resetPin()" style="background:none; border:none; color:#475569; font-size:0.8rem; cursor:pointer;">Cài đặt lại PIN?</button>
-        </div>
+        <p id="msg" style="color:#ef4444; margin-top:10px; text-align:center; font-size: 0.8rem;"></p>
     </div>
 
     <div id="mainApp" style="display: none; height: 100%;">
@@ -79,26 +73,9 @@
     <div id="accModal" class="modal"><div class="modal-content"><span style="float:right; cursor:pointer;" onclick="closeM('accModal')">&times;</span><h2 id="accTitle">Tài khoản</h2><div style="margin-bottom:15px; background:#0f1623; padding:10px;"><input id="newU" placeholder="User"><input id="newP" placeholder="Pass"><input id="newN" placeholder="Ghi chú"><button onclick="addAcc()" style="width:100%; background:#059669; color:white; padding:8px; border:none;">+ Thêm</button></div><div id="accList"></div></div></div>
 
     <script>
-        // --- CẤU HÌNH TỰ ĐỘNG (AUTO SETUP) ---
-        // Không hardcode mã PIN nữa.
-        // Mã sẽ được lưu vào trình duyệt của bạn ở lần nhập đầu tiên.
+     
+        const HASHED_PIN = "d01f9c878931168571775796010534e7dd108139556fa39f37c37f009383842c";
         
-        const STORAGE_KEY = 'kts_pin_hash_v15';
-        let storedHash = localStorage.getItem(STORAGE_KEY); // Lấy mã đã lưu (nếu có)
-        
-        // Trạng thái: Nếu chưa có mã -> Setup Mode. Nếu có rồi -> Login Mode.
-        let isSetupMode = !storedHash;
-
-        // UI Initialization
-        if (isSetupMode) {
-            document.getElementById('lockTitle').innerText = "Thiết lập PIN mới";
-            document.getElementById('lockTitle').style.color = "#facc15"; // Màu vàng
-            document.getElementById('lockSub').innerText = "Lần đầu sử dụng: Hãy nhập mã PIN 6 số bạn muốn dùng.";
-        } else {
-            document.getElementById('lockTitle').innerText = "Đăng nhập";
-            document.getElementById('lockSub').innerText = "Nhập mã PIN để mở khóa.";
-        }
-
         let curPin = "";
         let folders = JSON.parse(localStorage.getItem('f')) || [{id:'w',name:'Công việc'}];
         let tools = JSON.parse(localStorage.getItem('t')) || [];
@@ -114,58 +91,37 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // --- XỬ LÝ NHẬP PIN ---
+        // --- KIỂM TRA PIN ---
         function p(n){ 
             if(curPin.length < 6){ 
                 curPin += n; 
                 dr(); 
-                if(curPin.length == 6) processPin(); 
+                if(curPin.length == 6) checkPin(); 
             }
         }
         function clr(){ curPin=""; dr(); document.getElementById('msg').innerText=""; }
         function dr(){ for(let i=1;i<=6;i++) { let d=document.getElementById('dot'+i); if(d) d.className=i<=curPin.length?"dot filled":"dot"; } }
         
-        async function processPin() {
-            document.getElementById('msg').innerText = "Đang xử lý...";
-            
+        async function checkPin() {
             try {
-                // Tính mã Hash của số vừa nhập
+                if (!window.crypto || !window.crypto.subtle) throw new Error("HTTPS Required");
+                
                 const inputHash = await sha256(curPin);
-
-                if (isSetupMode) {
-                    // --- CHẾ ĐỘ CÀI ĐẶT ---
-                    // Lưu mã hash này lại làm mã chuẩn
-                    localStorage.setItem(STORAGE_KEY, inputHash);
-                    alert("Đã thiết lập mã PIN thành công! Hãy ghi nhớ nó.");
-                    
-                    // Chuyển ngay vào app
-                    unlockApp();
+                
+                if(inputHash === HASHED_PIN){
+                    // ĐÚNG MÃ -> MỞ KHÓA
+                    document.getElementById('lockScreen').style.display='none';
+                    document.getElementById('mainApp').style.display='flex';
+                    loadCfg(); render();
                 } else {
-                    // --- CHẾ ĐỘ ĐĂNG NHẬP ---
-                    if (inputHash === storedHash) {
-                        unlockApp();
-                    } else {
-                        document.getElementById('msg').innerText = "Sai mã PIN!";
-                        setTimeout(clr, 500);
-                    }
+                    // SAI MÃ -> BÁO LỖI & HIỆN MÃ HASH ĐỂ SỬA
+                    document.getElementById('msg').innerHTML = 
+                        `Sai mã PIN! <br> Code máy bạn tính ra là: <br> <b style="color:yellow; font-family:monospace; font-size:0.7rem;">${inputHash}</b> <br> Hãy copy dòng vàng ở trên thay vào HASHED_PIN trong code nếu bạn chắc chắn nhập đúng số.`;
+                    setTimeout(clr, 10000); // Hiện lỗi lâu hơn để kịp đọc
                 }
-
             } catch (e) {
-                alert("Lỗi bảo mật trình duyệt: " + e.message + "\n\nBạn phải upload lên GitHub (HTTPS) mới dùng được tính năng này.");
+                alert("Lỗi: Bạn phải upload lên GitHub (HTTPS) mới dùng được tính năng bảo mật này.");
                 clr();
-            }
-        }
-
-        function unlockApp() {
-            document.getElementById('lockScreen').style.display='none';
-            document.getElementById('mainApp').style.display='flex';
-            loadCfg(); render();
-        }
-
-        function resetPin() {
-            if(confirm("Bạn có chắc muốn xóa mã PIN cũ để cài lại từ đầu không?\n\n(Dữ liệu Web/Pass không bị mất, chỉ mất mã PIN trên máy này).")) {
-                localStorage.removeItem(STORAGE_KEY);
-                location.reload();
             }
         }
 
