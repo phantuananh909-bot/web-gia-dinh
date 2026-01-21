@@ -85,7 +85,6 @@
     <div id="accModal" class="modal"><div class="modal-content"><span style="float:right; cursor:pointer;" onclick="closeM('accModal')">&times;</span><h2 id="accTitle">Tài khoản</h2><div style="margin-bottom:15px; background:#0f1623; padding:10px;"><input id="newU" placeholder="User"><input id="newP" placeholder="Pass"><input id="newN" placeholder="Ghi chú"><button onclick="addAcc()" style="width:100%; background:#059669; color:white; padding:8px; border:none;">+ Thêm</button></div><div id="accList"></div></div></div>
 
     <script>
-        // --- 1. MÃ PIN ĐÃ ĐƯỢC MÃ HÓA (ĐÂY LÀ MÃ CỦA SỐ 412759) ---
         const HASHED_PIN = "d01f9c878931168571775796010534e7dd108139556fa39f37c37f009383842c";
         
         let curPin = "";
@@ -95,7 +94,7 @@
         let binId = localStorage.getItem('binId') || "";
         let apiKey = localStorage.getItem('apiKey') || "";
 
-        // --- 2. HÀM BĂM SHA-256 ---
+
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -115,7 +114,7 @@
         function dr(){ for(let i=1;i<=6;i++) { let d=document.getElementById('dot'+i); if(d) d.className=i<=curPin.length?"dot filled":"dot"; } }
         
         async function checkPin() {
-            // So sánh mã băm của số vừa nhập với mã gốc
+        
             const inputHash = await sha256(curPin);
             if(inputHash === HASHED_PIN){
                 document.getElementById('lockScreen').style.display='none';
