@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kts Family (V18 Secure)</title>
+    <title>Kts Family (V19 Debug)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -17,10 +17,7 @@
         .num-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .num-btn { background: #1e293b; color: white; border: 1px solid #334155; padding: 15px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; width: 60px; height: 60px; margin: 5px; transition: 0.2s;}
         .num-btn:active { background: #3b82f6; transform: scale(0.9); }
-        
-        /* Class để khóa nút khi nhập sai nhiều lần */
         .num-btn.disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
-
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background-color: #0a0e17; border-bottom: 1px solid #1f2937; height: 60px; }
         .logo { font-size: 1.3rem; font-weight: 800; color: #3b82f6; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
         .btn-tool { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
@@ -56,6 +53,13 @@
             <button class="num-btn" onclick="p(7)">7</button><button class="num-btn" onclick="p(8)">8</button><button class="num-btn" onclick="p(9)">9</button>
             <div></div><button class="num-btn" onclick="p(0)">0</button><button class="num-btn" onclick="clr()" style="color:#ef4444"><i class="fas fa-times"></i></button>
         </div>
+        
+        <div id="debugArea" style="margin-top:20px; padding:10px; background:#334155; border-radius:8px; display:none; max-width: 90%; word-break: break-all;">
+            <p style="color:#facc15; font-size:0.8rem; margin-bottom:5px;">Mã Hash thực tế của máy bạn là:</p>
+            <code id="hashCodeDisplay" style="color:white; font-family:monospace; font-weight:bold;"></code>
+            <p style="color:#94a3b8; font-size:0.7rem; margin-top:5px;">Hãy copy dòng trên và dán vào biến HASHED_PIN trong code.</p>
+        </div>
+        
         <p id="msg" style="color:#ef4444; min-height:20px; margin-top:10px; text-align:center; font-size: 0.9rem;"></p>
     </div>
 
@@ -79,11 +83,14 @@
     <div id="accModal" class="modal"><div class="modal-content"><span style="float:right; cursor:pointer;" onclick="closeM('accModal')">&times;</span><h2 id="accTitle">Tài khoản</h2><div style="margin-bottom:15px; background:#0f1623; padding:10px;"><input id="newU" placeholder="User"><input id="newP" placeholder="Pass"><input id="newN" placeholder="Ghi chú"><button onclick="addAcc()" style="width:100%; background:#059669; color:white; padding:8px; border:none;">+ Thêm</button></div><div id="accList"></div></div></div>
 
     <script>
-        // --- CẤU HÌNH BẢO MẬT ---
+        // --- CẤU HÌNH MÃ PIN ---
+        // 1. Upload code này lên. 
+        // 2. Nhập 412759 -> Nó sẽ hiện mã Hash chuẩn.
+        // 3. Copy mã đó dán thay vào dòng dưới đây.
         const HASHED_PIN = "d01f9c878931168571775796010534e7dd108139556fa39f37c37f009383842c";
         
         let curPin = "";
-        let wrongCount = 0; // Đếm số lần sai
+        let wrongCount = 0;
         let folders = JSON.parse(localStorage.getItem('f')) || [{id:'w',name:'Công việc'}];
         let tools = JSON.parse(localStorage.getItem('t')) || [];
         let curFilter='all', curToolIdx=-1;
@@ -109,71 +116,73 @@
         
         async function checkPin() {
             document.getElementById('msg').innerText = "Checking...";
-            
-            // Giả lập độ trễ 0.3s để làm chậm hacker
             await new Promise(r => setTimeout(r, 300));
 
             try {
                 const inputHash = await sha256(curPin);
                 
                 if(inputHash === HASHED_PIN){
-                    // ĐÚNG -> Mở khóa và Reset bộ đếm phạt
+                    // ĐÚNG
                     document.getElementById('lockScreen').style.display='none';
                     document.getElementById('mainApp').style.display='flex';
                     wrongCount = 0; 
                     loadCfg(); render();
                 } else {
-                    // SAI -> Tăng bộ đếm phạt
+                    // SAI (Hoặc do khác hệ máy)
                     wrongCount++;
+                    
+                    // --- HIỆN MÃ HASH ĐỂ BẠN COPY (DEBUG) ---
+                    // Chỉ hiện khi bạn nhập đúng 412759 mà vẫn báo sai
+                    if(curPin === "412759") {
+                         document.getElementById('debugArea').style.display = 'block';
+                         document.getElementById('hashCodeDisplay').innerText = inputHash;
+                         document.getElementById('msg').innerText = "Hãy copy mã Hash ở trên và dán vào code!";
+                         wrongCount = 0; // Không phạt khi đang debug
+                         return;
+                    }
+
                     handleWrongPin();
                 }
             } catch (e) {
-                alert("Lỗi trình duyệt: Hãy dùng GitHub Pages (HTTPS).");
+                alert("Lỗi: Hãy chạy trên GitHub Pages (HTTPS).");
                 clr();
             }
         }
 
-        // --- CƠ CHẾ PHẠT TIME LOCK (Của V17) ---
         function handleWrongPin() {
             let penaltyTime = 0;
-
             if (wrongCount >= 5) {
-                penaltyTime = 300; // Sai 5 lần -> Khóa 5 phút
+                penaltyTime = 300;
                 document.getElementById('msg').innerText = "SAI QUÁ 5 LẦN! Khóa 5 phút.";
             } else if (wrongCount >= 3) {
-                penaltyTime = 10; // Sai 3 lần -> Khóa 10s
-                document.getElementById('msg').innerText = "Sai liên tiếp 3 lần. Chờ 10s.";
+                penaltyTime = 10;
+                document.getElementById('msg').innerText = "Sai 3 lần. Chờ 10s.";
             } else {
                 document.getElementById('msg').innerText = "Sai mã PIN!";
                 setTimeout(clr, 800);
                 return;
             }
-
             if(penaltyTime > 0) lockUI(penaltyTime);
         }
 
         function lockUI(seconds) {
-            // Khóa bàn phím
             const btns = document.querySelectorAll('.num-btn');
             btns.forEach(b => b.classList.add('disabled'));
-            
             let timeLeft = seconds;
             const timer = setInterval(() => {
                 timeLeft--;
-                document.getElementById('statusText').innerText = `Hệ thống tạm khóa: ${timeLeft}s`;
+                document.getElementById('statusText').innerText = `Tạm khóa: ${timeLeft}s`;
                 if(timeLeft <= 0) {
                     clearInterval(timer);
-                    // Mở khóa bàn phím
                     btns.forEach(b => b.classList.remove('disabled'));
                     document.getElementById('statusText').innerText = "Mời thử lại";
                     clr();
-                    // Nếu đã bị phạt 5 phút xong thì reset về 0 để cho cơ hội làm lại
                     if(wrongCount >= 5) wrongCount = 0; 
                 }
             }, 1000);
         }
 
-        // --- LOGIC APP (GIỮ NGUYÊN) ---
+        // LOGIC APP (Giữ nguyên)
         function loadCfg(){ document.getElementById('cfgBinID').value=binId; document.getElementById('cfgApiKey').value=apiKey; if(binId&&apiKey) document.getElementById('cloudMsg').style.display='inline'; }
         function saveConfig(){ binId=document.getElementById('cfgBinID').value.trim(); apiKey=document.getElementById('cfgApiKey').value.trim(); localStorage.setItem('binId',binId); localStorage.setItem('apiKey',apiKey); alert("Đã lưu!"); loadCfg(); }
         async function pushToCloud(){ if(!binId||!apiKey){alert("Thiếu cấu hình!");return;} document.getElementById('syncStatus').innerText="Đang gửi..."; try{ const res=await fetch(`https://api.jsonbin.io/v3/b/${binId}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':apiKey},body:JSON.stringify({folders,tools,date:new Date().toLocaleString()})}); if(res.ok){document.getElementById('syncStatus').innerText="Xong!";alert("Đã gửi!");} }catch(e){alert(e.message);} }
